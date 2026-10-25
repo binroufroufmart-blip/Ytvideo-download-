@@ -1,0 +1,6 @@
+{
+  "name": "VidFlow Pro - Video Downloader",
+  "description": "Modern and elegant YouTube video and audio downloader with multiple formats, resolutions, and instant conversion.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
