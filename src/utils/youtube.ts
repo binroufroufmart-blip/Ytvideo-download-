@@ -1,3 +1,26 @@
+
+// RapidAPI Integration
+export async function fetchVideoFromRapidAPI(videoId: string) {
+  const url = `https://youtube-video-fast-downloader-24-7.p.rapidapi.com/get-video-info/${videoId}?return_available_quality=false&response_mode=default`;
+  const options = {
+    method: 'GET',
+    headers: {
+      'x-rapidapi-key': '2f1d7d5c35mshc594f6c86730a64p157d1fjsn1c2ee9b8fbfa',
+      'x-rapidapi-host': 'youtube-video-fast-downloader-24-7.p.rapidapi.com'
+    }
+  };
+
+  try {
+    const response = await fetch(url, options);
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+
 import { SampleVideo, VideoFormat, VideoMetadata } from '../types';
 
 export const SAMPLE_VIDEOS: SampleVideo[] = [
