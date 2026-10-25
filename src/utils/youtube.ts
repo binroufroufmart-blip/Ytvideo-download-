@@ -267,51 +267,43 @@ export async function triggerFileDownload(
 
   const baseFileName = sanitize(video.title) || `youtube_${video.id}`;
 
-  // Handle Thumbnail Download
   if (format === 'thumbnail') {
-    onProgress?.(50, '15.2 MB/s', '1s');
-    try {
-      const thumbUrl = `https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`;
-      const res = await fetch(thumbUrl);
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${baseFileName}_thumbnail.jpg`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        onProgress?.(100, '15.2 MB/s', '0s');
-        return;
-      }
-    } catch {}
+    onProgress?.(100, '15.2 MB/s', '0s');
+    const a = document.createElement('a');
+    a.href = `https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`;
+    a.target = '_blank';
+    a.download = `${baseFileName}_thumbnail.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
     return;
   }
 
-  // Fetch real download link from RapidAPI
-  onProgress?.(20, 'Connecting to API...', '3s');
+  onProgress?.(30, 'Connecting to API...', '2s');
   try {
     const apiData = await fetchVideoFromRapidAPI(video.id);
-    onProgress?.(60, 'Fetching stream...', '2s');
+    onProgress?.(70, 'Getting download link...', '1s');
 
-    const downloadUrl = apiData?.link || apiData?.url || (apiData?.formats && apiData.formats[0]?.url);
+    const downloadUrl = 
+      apiData?.link || 
+      apiData?.url || 
+      apiData?.download || 
+      apiData?.download_url || 
+      apiData?.data?.link || 
+      apiData?.data?.url || 
+      apiData?.videoUrl ||
+      (apiData?.formats && apiData.formats[0]?.url) ||
+      (Array.isArray(apiData) && apiData[0]?.url);
 
     if (downloadUrl) {
-      onProgress?.(80, 'Downloading...', '1s');
-      const videoRes = await fetch(downloadUrl);
-      const blob = await videoRes.blob();
-      
       onProgress?.(100, 'Complete!', '0s');
-      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = downloadUrl;
+      a.target = '_blank';
       a.download = `${baseFileName}.${format.container || 'mp4'}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
       return;
     }
   } catch (error) {
