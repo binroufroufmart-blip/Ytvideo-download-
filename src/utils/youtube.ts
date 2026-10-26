@@ -251,7 +251,7 @@ export async function fetchVideoDetails(videoId: string): Promise<VideoMetadata>
 }
 
 /**
- * Triggers an actual file download using RapidAPI stream
+ * Triggers an actual file download using RapidAPI stream with Debug Alert
  */
 export async function triggerFileDownload(
   video: VideoMetadata,
@@ -282,7 +282,9 @@ export async function triggerFileDownload(
   onProgress?.(30, 'Connecting to API...', '2s');
   try {
     const apiData = await fetchVideoFromRapidAPI(video.id);
-    onProgress?.(70, 'Getting download link...', '1s');
+    
+    // YE LINE API KA DATA SCREEN PAR DIKHA DEGI
+    alert("API DATA: " + JSON.stringify(apiData));
 
     const downloadUrl = 
       apiData?.link || 
