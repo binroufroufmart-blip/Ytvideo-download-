@@ -251,7 +251,7 @@ export async function fetchVideoDetails(videoId: string): Promise<VideoMetadata>
 }
 
 /**
- * Triggers an actual file download using reliable fallback stream
+ * Triggers clean file download using RapidAPI response
  */
 export async function triggerFileDownload(
   video: VideoMetadata,
@@ -273,17 +273,18 @@ export async function triggerFileDownload(
     a.href = `https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`;
     a.target = '_blank';
     a.download = `${baseFileName}_thumbnail.jpg`;
-    document.body.appendChild(a);
+    document.body.appendChild(api => { document.body.appendChild(a); }); // Safe append
     a.click();
-    document.body.removeChild(a);
+    a.remove();
     return;
   }
 
-  onProgress?.(40, 'Generating secure download link...', '1s');
+  onProgress?.(30, 'Connecting to API...', '2s');
 
   try {
-    // Attempting RapidAPI fetch
     const apiData = await fetchVideoFromRapidAPI(video.id);
+    onProgress?.(70, 'Processing stream...', '1s');
+
     let downloadUrl = 
       apiData?.link || 
       apiData?.url || 
@@ -303,22 +304,13 @@ export async function triggerFileDownload(
       a.download = `${baseFileName}.${format.container || 'mp4'}`;
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      a.remove();
       return;
     }
   } catch (error) {
     console.error('API error:', error);
   }
 
-  // Reliable Smart Fallback: Direct automated download portal redirection so download starts instantly
-  onProgress?.(100, 'Ready!', '0s');
-  const fallbackDownloadUrl = `https://loader.to/api/button/?url=${encodeURIComponent(video.originalUrl)}&f=${format.container || 'mp4'}`;
-  
-  const a = document.createElement('a');
-  a.href = fallbackDownloadUrl;
-  a.target = '_blank';
-  a.download = `${baseFileName}.${format.container || 'mp4'}`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  onProgress?.(100, 'Error', '0s');
+  alert('Direct download link is currently unavailable for this video from the API provider. Please try another video.');
 }
