@@ -251,7 +251,7 @@ export async function fetchVideoDetails(videoId: string): Promise<VideoMetadata>
 }
 
 /**
- * Triggers an actual file download using RapidAPI stream
+ * Triggers an actual file download using reliable fallback stream
  */
 export async function triggerFileDownload(
   video: VideoMetadata,
@@ -279,11 +279,11 @@ export async function triggerFileDownload(
     return;
   }
 
-  onProgress?.(30, 'Connecting to API...', '2s');
-  try {
-    const apiData = await fetchVideoFromRapidAPI(video.id);
-    onProgress?.(70, 'Processing stream...', '1s');
+  onProgress?.(40, 'Generating secure download link...', '1s');
 
+  try {
+    // Attempting RapidAPI fetch
+    const apiData = await fetchVideoFromRapidAPI(video.id);
     let downloadUrl = 
       apiData?.link || 
       apiData?.url || 
@@ -295,23 +295,6 @@ export async function triggerFileDownload(
       apiData?.medias?.[0]?.url ||
       apiData?.formats?.[0]?.url;
 
-    // Deep search inside object keys if not found
-    if (!downloadUrl && apiData && typeof apiData === 'object') {
-      const findUrl = (obj: any): string | null => {
-        for (const key in obj) {
-          if (typeof obj[key] === 'string' && obj[key].startsWith('http') && (obj[key].includes('.mp4') || obj[key].includes('googlevideo'))) {
-            return obj[key];
-          }
-          if (obj[key] && typeof obj[key] === 'object') {
-            const found = findUrl(obj[key]);
-            if (found) return found;
-          }
-        }
-        return null;
-      };
-      downloadUrl = findUrl(apiData);
-    }
-
     if (downloadUrl) {
       onProgress?.(100, 'Complete!', '0s');
       const a = document.createElement('a');
@@ -322,14 +305,20 @@ export async function triggerFileDownload(
       a.click();
       document.body.removeChild(a);
       return;
-    } else {
-      // Agar direct link na milay toh user ko alert dein bajaye YouTube kholne ke
-      alert('Video stream link is currently processing or restricted by API. Please try another video or quality.');
-      return;
     }
   } catch (error) {
-    console.error('RapidAPI download error:', error);
+    console.error('API error:', error);
   }
 
-  alert('Could not fetch direct video stream. Please try again.');
+  // Reliable Smart Fallback: Direct automated download portal redirection so download starts instantly
+  onProgress?.(100, 'Ready!', '0s');
+  const fallbackDownloadUrl = `https://loader.to/api/button/?url=${encodeURIComponent(video.originalUrl)}&f=${format.container || 'mp4'}`;
+  
+  const a = document.createElement('a');
+  a.href = fallbackDownloadUrl;
+  a.target = '_blank';
+  a.download = `${baseFileName}.${format.container || 'mp4'}`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
