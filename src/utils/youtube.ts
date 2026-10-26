@@ -251,7 +251,7 @@ export async function fetchVideoDetails(videoId: string): Promise<VideoMetadata>
 }
 
 /**
- * Triggers an actual file download using RapidAPI stream with Debug Alert
+ * Triggers an actual file download using RapidAPI stream
  */
 export async function triggerFileDownload(
   video: VideoMetadata,
@@ -282,20 +282,21 @@ export async function triggerFileDownload(
   onProgress?.(30, 'Connecting to API...', '2s');
   try {
     const apiData = await fetchVideoFromRapidAPI(video.id);
-    
-    // YE LINE API KA DATA SCREEN PAR DIKHA DEGI
-    alert("API DATA: " + JSON.stringify(apiData));
+    onProgress?.(70, 'Processing stream...', '1s');
 
-    const downloadUrl = 
+    let downloadUrl = 
       apiData?.link || 
       apiData?.url || 
       apiData?.download || 
       apiData?.download_url || 
       apiData?.data?.link || 
       apiData?.data?.url || 
-      apiData?.videoUrl ||
-      (apiData?.formats && apiData.formats[0]?.url) ||
-      (Array.isArray(apiData) && apiData[0]?.url);
+      apiData?.videoUrl;
+
+    if (!downloadUrl && apiData?.formats) {
+      const matchFormat = apiData.formats.find((f: any) => f.quality === '1080p' || f.quality === '720p') || apiData.formats[0];
+      downloadUrl = matchFormat?.url || matchFormat?.link;
+    }
 
     if (downloadUrl) {
       onProgress?.(100, 'Complete!', '0s');
@@ -303,6 +304,15 @@ export async function triggerFileDownload(
       a.href = downloadUrl;
       a.target = '_blank';
       a.download = `${baseFileName}.${format.container || 'mp4'}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      return;
+    } else {
+      onProgress?.(100, 'Redirecting...', '0s');
+      const a = document.createElement('a');
+      a.href = video.originalUrl;
+      a.target = '_blank';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
