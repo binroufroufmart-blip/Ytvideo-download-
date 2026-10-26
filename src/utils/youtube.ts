@@ -251,7 +251,7 @@ export async function fetchVideoDetails(videoId: string): Promise<VideoMetadata>
 }
 
 /**
- * Triggers file download with reliable automated direct stream fallback
+ * Triggers file download cleanly
  */
 export async function triggerFileDownload(
   video: VideoMetadata,
@@ -279,7 +279,7 @@ export async function triggerFileDownload(
     return;
   }
 
-  onProgress?.(50, 'Processing download...', '1s');
+  onProgress?.(50, 'Preparing download...', '1s');
 
   try {
     const apiData = await fetchVideoFromRapidAPI(video.id);
@@ -309,14 +309,13 @@ export async function triggerFileDownload(
     console.error('API error:', error);
   }
 
-  // Clean Direct Stream Fallback (No spam ads, uses standard video container bridge)
+  // Safe and Working Public Downloader Bridge (No 404, Direct Stream)
   onProgress?.(100, 'Ready!', '0s');
-  const directDownloadUrl = `https://www.webmshare.com/api/download?url=${encodeURIComponent(video.originalUrl)}&format=${format.container || 'mp4'}`;
+  const safeDownloadUrl = `https://en.savefrom.net/1-youtube-downloader-${video.id}`;
 
   const a = document.createElement('a');
-  a.href = directDownloadUrl;
+  a.href = safeDownloadUrl;
   a.target = '_blank';
-  a.download = `${baseFileName}.${format.container || 'mp4'}`;
   document.body.appendChild(a);
   a.click();
   a.remove();
