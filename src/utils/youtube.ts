@@ -291,11 +291,25 @@ export async function triggerFileDownload(
       apiData?.download_url || 
       apiData?.data?.link || 
       apiData?.data?.url || 
-      apiData?.videoUrl;
+      apiData?.videoUrl ||
+      apiData?.medias?.[0]?.url ||
+      apiData?.formats?.[0]?.url;
 
-    if (!downloadUrl && apiData?.formats) {
-      const matchFormat = apiData.formats.find((f: any) => f.quality === '1080p' || f.quality === '720p') || apiData.formats[0];
-      downloadUrl = matchFormat?.url || matchFormat?.link;
+    // Deep search inside object keys if not found
+    if (!downloadUrl && apiData && typeof apiData === 'object') {
+      const findUrl = (obj: any): string | null => {
+        for (const key in obj) {
+          if (typeof obj[key] === 'string' && obj[key].startsWith('http') && (obj[key].includes('.mp4') || obj[key].includes('googlevideo'))) {
+            return obj[key];
+          }
+          if (obj[key] && typeof obj[key] === 'object') {
+            const found = findUrl(obj[key]);
+            if (found) return found;
+          }
+        }
+        return null;
+      };
+      downloadUrl = findUrl(apiData);
     }
 
     if (downloadUrl) {
@@ -309,13 +323,8 @@ export async function triggerFileDownload(
       document.body.removeChild(a);
       return;
     } else {
-      onProgress?.(100, 'Redirecting...', '0s');
-      const a = document.createElement('a');
-      a.href = video.originalUrl;
-      a.target = '_blank';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      // Agar direct link na milay toh user ko alert dein bajaye YouTube kholne ke
+      alert('Video stream link is currently processing or restricted by API. Please try another video or quality.');
       return;
     }
   } catch (error) {
